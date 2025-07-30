@@ -6,7 +6,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { GetBalanceByDateRangeDto } from './dto/get-balance-by-date-range.dto';
 
 @ApiBearerAuth()
-@ApiTags('balance')
+@ApiTags('Balance')
 @UseGuards(JwtAuthGuard)
 @Controller('balance')
 export class BalanceController {

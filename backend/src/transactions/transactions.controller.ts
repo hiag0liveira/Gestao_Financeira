@@ -8,7 +8,7 @@ import { GetMonthlyTransactionsDto } from './dto/get-monthly-transactions.dto';
 import { GetRangedTransactionsDto } from './dto/get-ranged-transactions.dto';
 
 @ApiBearerAuth()
-@ApiTags('transactions')
+@ApiTags('Transactions')
 @UseGuards(JwtAuthGuard)
 @Controller('transactions')
 export class TransactionsController {

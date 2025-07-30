@@ -6,7 +6,7 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiBearerAuth()
-@ApiTags('categories')
+@ApiTags('Categories')
 @UseGuards(JwtAuthGuard)
 @Controller('categories')
 export class CategoriesController {

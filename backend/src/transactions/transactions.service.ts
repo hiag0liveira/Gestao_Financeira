@@ -1,12 +1,12 @@
-// backend/src/transactions/transactions.service.ts
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, FindManyOptions, Repository } from 'typeorm';
-import { CreateTransactionDto } from './dto/create-transaction.dto';
-import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import { Between, FindManyOptions, In, Repository } from 'typeorm';
 import { Transaction } from './entities/transaction.entity';
 import { Category } from '../categories/entities/category.entity';
-import { GetTransactionsQueryDto } from './dto/get-transactions-query.dto';
+import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import { GetMonthlyTransactionsDto } from './dto/get-monthly-transactions.dto';
+import { GetRangedTransactionsDto } from './dto/get-ranged-transactions.dto';
 
 @Injectable()
 export class TransactionsService {
@@ -46,25 +46,12 @@ export class TransactionsService {
         return this.transactionsRepository.save(transaction);
     }
 
-    async findAllByUserId(userId: number, query: GetTransactionsQueryDto) {
-        const { year, month, page = 1, limit = 10 } = query;
-
-        const options: FindManyOptions<Transaction> = {
-            where: { user: { id: userId } },
-            relations: ['category'],
-            order: { date: 'DESC' },
-            take: limit,
-            skip: (page - 1) * limit,
-        };
-
-        if (year && month) {
-            const startDate = new Date(year, month - 1, 1);
-            const endDate = new Date(year, month, 0);
-            options.where = {
-                ...options.where,
-                date: Between(startDate, endDate),
-            };
-        }
+    private async findAndPaginate(userId: number, options: FindManyOptions<Transaction>, page: number, limit: number) {
+        options.where = { ...options.where, user: { id: userId } };
+        options.relations = ['category'];
+        options.order = { date: 'DESC' };
+        options.take = limit;
+        options.skip = (page - 1) * limit;
 
         const [data, total] = await this.transactionsRepository.findAndCount(options);
 
@@ -79,18 +66,44 @@ export class TransactionsService {
         };
     }
 
+    async findAllByMonth(userId: number, query: GetMonthlyTransactionsDto) {
+        const { year, month, page = 1, limit = 10, categoryIds } = query;
+
+        const firstDay = new Date(year, month - 1, 1);
+        const lastDay = new Date(year, month, 0);
+
+        const where: FindManyOptions<Transaction>['where'] = {
+            date: Between(firstDay, lastDay)
+        };
+
+        if (categoryIds && categoryIds.length > 0) {
+            where.category = { id: In(categoryIds) };
+        }
+
+        return this.findAndPaginate(userId, { where }, page, limit);
+    }
+
+    async findAllByRange(userId: number, query: GetRangedTransactionsDto) {
+        const { startDate, endDate, page = 1, limit = 10, categoryIds } = query;
+
+        const where: FindManyOptions<Transaction>['where'] = {
+            date: Between(new Date(startDate), new Date(endDate))
+        };
+
+        if (categoryIds && categoryIds.length > 0) {
+            where.category = { id: In(categoryIds) };
+        }
+
+        return this.findAndPaginate(userId, { where }, page, limit);
+    }
+
     async update(id: number, updateTransactionDto: UpdateTransactionDto, userId: number): Promise<Transaction> {
         const transaction = await this.transactionsRepository.findOne({
-            where: { id },
-            relations: ['user'],
+            where: { id, user: { id: userId } },
         });
 
         if (!transaction) {
-            throw new NotFoundException(`Transação com ID ${id} não encontrada.`);
-        }
-
-        if (transaction.user.id !== userId) {
-            throw new UnauthorizedException('Você não tem permissão para editar esta transação.');
+            throw new NotFoundException(`Transação com ID ${id} não encontrada ou não pertence a você.`);
         }
 
         const updatedTransaction = this.transactionsRepository.merge(transaction, updateTransactionDto);
@@ -102,21 +115,11 @@ export class TransactionsService {
         return this.transactionsRepository.save(updatedTransaction);
     }
 
-
     async remove(id: number, userId: number): Promise<void> {
-        const transaction = await this.transactionsRepository.findOne({
-            where: { id },
-            relations: ['user'],
-        });
+        const result = await this.transactionsRepository.delete({ id, user: { id: userId } });
 
-        if (!transaction) {
-            throw new NotFoundException(`Transação com ID ${id} não encontrada.`);
+        if (result.affected === 0) {
+            throw new NotFoundException(`Transação com ID ${id} não encontrada ou não pertence a você.`);
         }
-
-        if (transaction.user.id !== userId) {
-            throw new UnauthorizedException('Você não tem permissão para remover esta transação.');
-        }
-
-        await this.transactionsRepository.remove(transaction);
     }
 }

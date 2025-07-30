@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request, ParseIntPipe, HttpCode, HttpStatus, Patch, ValidationPipe } from '@nestjs/common';
+// backend/src/transactions/transactions.controller.ts
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request, ParseIntPipe, HttpCode, HttpStatus, Patch, ValidationPipe, Query } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { GetTransactionsQueryDto } from './dto/get-transactions-query.dto';
 
 @ApiBearerAuth()
 @ApiTags('transactions')
@@ -23,12 +25,12 @@ export class TransactionsController {
     }
 
     @Get()
-    @ApiOperation({ summary: 'Lista todas as transações do usuário logado' })
+    @ApiOperation({ summary: 'Lista as transações do usuário logado com filtros e paginação' })
     @ApiResponse({ status: 200, description: 'Lista de transações retornada com sucesso.' })
     @ApiResponse({ status: 401, description: 'Não autorizado.' })
-    findAll(@Request() req) {
+    findAll(@Request() req, @Query(ValidationPipe) query: GetTransactionsQueryDto) {
         const userId = req.user.userId;
-        return this.transactionsService.findAllByUserId(userId);
+        return this.transactionsService.findAllByUserId(userId, query);
     }
 
     @Patch(':id')

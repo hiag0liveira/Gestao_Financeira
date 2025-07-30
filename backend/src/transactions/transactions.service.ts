@@ -1,10 +1,12 @@
+// backend/src/transactions/transactions.service.ts
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, FindManyOptions, Repository } from 'typeorm';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { Transaction } from './entities/transaction.entity';
 import { Category } from '../categories/entities/category.entity';
+import { GetTransactionsQueryDto } from './dto/get-transactions-query.dto';
 
 @Injectable()
 export class TransactionsService {
@@ -44,12 +46,37 @@ export class TransactionsService {
         return this.transactionsRepository.save(transaction);
     }
 
-    findAllByUserId(userId: number): Promise<Transaction[]> {
-        return this.transactionsRepository.find({
+    async findAllByUserId(userId: number, query: GetTransactionsQueryDto) {
+        const { year, month, page = 1, limit = 10 } = query;
+
+        const options: FindManyOptions<Transaction> = {
             where: { user: { id: userId } },
             relations: ['category'],
             order: { date: 'DESC' },
-        });
+            take: limit,
+            skip: (page - 1) * limit,
+        };
+
+        if (year && month) {
+            const startDate = new Date(year, month - 1, 1);
+            const endDate = new Date(year, month, 0);
+            options.where = {
+                ...options.where,
+                date: Between(startDate, endDate),
+            };
+        }
+
+        const [data, total] = await this.transactionsRepository.findAndCount(options);
+
+        return {
+            data,
+            meta: {
+                totalItems: total,
+                itemsPerPage: limit,
+                currentPage: page,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
     }
 
     async update(id: number, updateTransactionDto: UpdateTransactionDto, userId: number): Promise<Transaction> {

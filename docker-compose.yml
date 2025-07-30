@@ -51,6 +51,7 @@ services:
       NEXT_PUBLIC_API_URL: http://localhost:${BACKEND_PORT}
     depends_on:
       - backend
+    command: sh -c "npm install && npm run dev"
 
 volumes:
   postgres_data:

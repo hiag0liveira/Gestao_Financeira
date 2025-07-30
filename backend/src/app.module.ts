@@ -8,6 +8,7 @@ import { User } from './users/entities/user.entity';
 import { Transaction } from './transactions/entities/transaction.entity';
 import { TransactionsModule } from './transactions/transactions.module';
 import { CategoriesModule } from './categories/categories.module';
+import { BalanceModule } from './balance/balance.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { CategoriesModule } from './categories/categories.module';
     AuthModule,
     TransactionsModule,
     CategoriesModule,
+    BalanceModule,
   ],
   controllers: [],
   providers: [],

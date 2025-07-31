@@ -1,4 +1,3 @@
-// frontend/src/app/(auth)/register/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -20,6 +19,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { AnimatedTitle } from "@/components/animated-title";
+import { useRouter } from "next/navigation";
+import apiClient from "@/lib/api/axios";
+import { toast } from "sonner";
 
 const formSchema = z
   .object({
@@ -37,6 +39,8 @@ const formSchema = z
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -47,8 +51,29 @@ export default function RegisterPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values); // TODO: integrar API de cadastro
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
+    try {
+      await apiClient.post("/auth/signup", {
+        email: values.email,
+        password: values.password,
+      });
+
+      toast.success(
+        "Conta criada com sucesso! Você será redirecionado para o login."
+      );
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message ||
+        "Erro ao criar conta. Tente novamente.";
+      toast.error(errorMessage);
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (

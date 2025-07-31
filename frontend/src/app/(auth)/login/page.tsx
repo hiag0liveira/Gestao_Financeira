@@ -19,6 +19,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { AnimatedTitle } from "@/components/animated-title";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { setCookie } from "cookies-next";
+import apiClient from "@/lib/api/axios";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Por favor, insira um email válido." }),
@@ -27,6 +31,8 @@ const formSchema = z.object({
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -36,8 +42,21 @@ export default function LoginPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values); // TODO: integrar API
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
+    try {
+      const response = await apiClient.post("/auth/login", values);
+      const { access_token } = response.data;
+
+      setCookie("auth_token", access_token, { maxAge: 60 * 60 * 24 });
+      toast.success("Login realizado com sucesso!");
+      router.push("/dashboard");
+    } catch (error) {
+      toast.error("Erro ao fazer login. Verifique suas credenciais.");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (

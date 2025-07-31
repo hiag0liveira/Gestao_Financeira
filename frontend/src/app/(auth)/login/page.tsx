@@ -50,7 +50,7 @@ export default function LoginPage() {
 
       setCookie("auth_token", access_token, { maxAge: 60 * 60 * 24 });
       toast.success("Login realizado com sucesso!");
-      router.push("/dashboard");
+      router.push("/");
     } catch (error) {
       toast.error("Erro ao fazer login. Verifique suas credenciais.");
       console.error(error);

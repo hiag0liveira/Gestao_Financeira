@@ -5,14 +5,17 @@ const AUTH_TOKEN_COOKIE = 'auth_token';
 
 export function middleware(request: NextRequest) {
     const authToken = request.cookies.get(AUTH_TOKEN_COOKIE)?.value
+    const { pathname } = request.nextUrl
 
-    if (!authToken && request.nextUrl.pathname.startsWith('/dashboard')) {
+    const publicPaths = ['/login', '/register'];
+
+    if (!authToken && !publicPaths.includes(pathname)) {
         const loginUrl = new URL('/login', request.url)
         return NextResponse.redirect(loginUrl)
     }
 
-    if (authToken && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register'))) {
-        const dashboardUrl = new URL('/dashboard', request.url)
+    if (authToken && publicPaths.includes(pathname)) {
+        const dashboardUrl = new URL('/', request.url)
         return NextResponse.redirect(dashboardUrl)
     }
 
@@ -21,6 +24,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        '/((?!api|_next/static|_next/image|favicon.ico).*)',
+        '/((?!api|_next/static|_next/image|.*\\.png$|favicon.ico).*)',
     ],
 }

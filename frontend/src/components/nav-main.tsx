@@ -1,42 +1,59 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ShoppingCart, LineChart, Package } from "lucide-react";
+import { Home, LineChart, PackagePlus, PlusCircle } from "lucide-react";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useDashboardUI } from "@/contexts/dashboard-ui-provider";
+import Link from "next/link";
 
 const navLinks = [
-  { href: "/dashboard", title: "Dashboard", icon: Home },
-  { href: "/dashboard/transactions", title: "Transações", icon: ShoppingCart },
-  { href: "/dashboard/reports", title: "Relatórios", icon: LineChart },
-  { href: "/dashboard/categories", title: "Categorias", icon: Package },
+  { href: "/", title: "Visão Geral", icon: Home, isLink: true },
+  { action: "addTransaction", title: "Nova Transação", icon: PlusCircle },
+  { action: "addCategory", title: "Nova Categoria", icon: PackagePlus },
+  { href: "#reports", title: "Relatórios", icon: LineChart, isLink: true },
 ];
 
 export function NavMain() {
   const pathname = usePathname();
+  const { openTransactionForm, openCategoryForm } = useDashboardUI();
+
+  const handleAction = (action?: string) => {
+    if (action === "addTransaction") openTransactionForm();
+    if (action === "addCategory") openCategoryForm();
+  };
 
   return (
     <SidebarMenu>
       {navLinks.map((item) => (
         <SidebarMenuItem key={item.title}>
-          <SidebarMenuButton
-            asChild
-            tooltip={item.title}
-            className={
-              pathname === item.href
-                ? "bg-secondary text-secondary-foreground"
-                : ""
-            }
-          >
-            <Link href={item.href}>
+          {item.isLink ? (
+            <SidebarMenuButton
+              asChild
+              tooltip={item.title}
+              className={
+                pathname === item.href
+                  ? "bg-secondary text-secondary-foreground"
+                  : ""
+              }
+            >
+              <Link href={item.href!}>
+                <item.icon className="size-4" />
+                <span>{item.title}</span>
+              </Link>
+            </SidebarMenuButton>
+          ) : (
+            <SidebarMenuButton
+              tooltip={item.title}
+              onClick={() => handleAction(item.action)}
+            >
               <item.icon className="size-4" />
               <span>{item.title}</span>
-            </Link>
-          </SidebarMenuButton>
+            </SidebarMenuButton>
+          )}
         </SidebarMenuItem>
       ))}
     </SidebarMenu>

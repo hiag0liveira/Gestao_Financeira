@@ -33,6 +33,10 @@ export const getRangedTransactions = (params: RangedTransactionParams) => {
     return apiClient.get('/transactions/by-range', { params });
 };
 
+export const updateTransaction = (id: number, data: Partial<CreateTransactionData>) => {
+    return apiClient.patch(`/transactions/${id}`, data);
+};
+
 
 export const deleteTransaction = (id: number) => {
     return apiClient.delete(`/transactions/${id}`);

@@ -1,7 +1,13 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Home, LineChart, PackagePlus, PlusCircle } from "lucide-react";
+import {
+  FolderCog,
+  Home,
+  LineChart,
+  PackagePlus,
+  PlusCircle,
+} from "lucide-react";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -14,15 +20,22 @@ const navLinks = [
   { href: "/", title: "Visão Geral", icon: Home, isLink: true },
   { action: "addTransaction", title: "Nova Transação", icon: PlusCircle },
   { action: "addCategory", title: "Nova Categoria", icon: PackagePlus },
+  {
+    action: "manageCategories",
+    title: "Gerenciar Categorias",
+    icon: FolderCog,
+  },
 ];
 
 export function NavMain() {
   const pathname = usePathname();
-  const { openTransactionForm, openCategoryForm } = useDashboardUI();
+  const { openTransactionForm, openCategoryForm, openCategoryManager } =
+    useDashboardUI();
 
   const handleAction = (action?: string) => {
     if (action === "addTransaction") openTransactionForm();
     if (action === "addCategory") openCategoryForm();
+    if (action === "manageCategories") openCategoryManager();
   };
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -18,13 +18,18 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useDashboardUI } from "@/contexts/dashboard-ui-provider";
-import { createCategory } from "@/lib/api/categories";
+import { createCategory, updateCategory } from "@/lib/api/categories";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "O nome da categoria é obrigatório." }),
 });
 
-export function CategoryForm() {
+interface CategoryFormProps {
+  initialData?: { id: number; name: string } | null;
+  onSuccess?: () => void;
+}
+
+export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { closeCategoryForm, notifyCategoryCreated } = useDashboardUI();
 
@@ -33,15 +38,28 @@ export function CategoryForm() {
     defaultValues: { name: "" },
   });
 
+  useEffect(() => {
+    if (initialData) {
+      form.reset({ name: initialData.name });
+    }
+  }, [initialData, form]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const newCategory = await createCategory(values);
-      toast.success(`Categoria "${newCategory.name}" criada com sucesso!`);
-      notifyCategoryCreated(newCategory);
+      if (initialData) {
+        await updateCategory(initialData.id, values);
+        toast.success(`Categoria "${values.name}" atualizada com sucesso!`);
+      } else {
+        const newCategory = await createCategory(values);
+        toast.success(`Categoria "${newCategory.name}" criada com sucesso!`);
+        notifyCategoryCreated(newCategory);
+      }
+
+      if (onSuccess) onSuccess();
       closeCategoryForm();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Erro ao criar categoria.");
+      toast.error(error.response?.data?.message || "Erro ao salvar categoria.");
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +87,7 @@ export function CategoryForm() {
         />
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Salvar Categoria
+          {initialData ? "Salvar Alterações" : "Salvar Categoria"}
         </Button>
       </form>
     </Form>

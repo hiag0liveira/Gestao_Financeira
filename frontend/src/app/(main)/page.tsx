@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { startOfMonth, endOfMonth, addMonths, isAfter, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -90,7 +90,8 @@ async function fetchMonthlyBalancesInRange(
 }
 
 export default function DashboardPage() {
-  const { openTransactionForm, openCategoryForm } = useDashboardUI();
+  const { openTransactionForm, openTransactionFormWithData, openCategoryForm } =
+    useDashboardUI();
   const [date, setDate] = useState<DateRange | undefined>({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
@@ -105,11 +106,47 @@ export default function DashboardPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
 
+  const { setAfterSaveCallback } = useDashboardUI();
+
   const [categoriesLoaded, setCategoriesLoaded] = useState(false);
 
   const [monthlyData, setMonthlyData] = useState<
     { month: string; balance: number }[]
   >([]);
+
+  const fetchData = useCallback(async () => {
+    if (!categoriesLoaded || !date?.from || !date?.to) return;
+
+    setIsLoading(true);
+
+    const params = {
+      startDate: format(date.from, "yyyy-MM-dd"),
+      endDate: format(date.to, "yyyy-MM-dd"),
+      categoryIds: selectedCategories.map((c) => c.id),
+      page: currentPage,
+      limit: 10,
+    };
+
+    const monthly = await fetchMonthlyBalancesInRange(
+      date.from,
+      date.to,
+      selectedCategories.map((c) => c.id)
+    );
+    setMonthlyData(monthly);
+
+    try {
+      const [balanceRes, transactionsRes] = await Promise.all([
+        getBalanceByDateRange(params),
+        getRangedTransactions(params),
+      ]);
+      setBalanceData(balanceRes.data);
+      setTransactions(transactionsRes.data);
+    } catch (error) {
+      toast.error("Erro ao buscar dados do dashboard.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [categoriesLoaded, date, selectedCategories, currentPage]);
 
   useEffect(() => {
     const fetchAllCategories = async () => {
@@ -126,42 +163,10 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (!categoriesLoaded || !date?.from || !date?.to) return;
+    setAfterSaveCallback(fetchData);
+  }, [fetchData, setAfterSaveCallback]);
 
-    const fetchData = async () => {
-      setIsLoading(true);
-
-      if (!categoriesLoaded || !date?.from || !date?.to) return;
-
-      const params = {
-        startDate: format(date.from, "yyyy-MM-dd"),
-        endDate: format(date.to, "yyyy-MM-dd"),
-        categoryIds: selectedCategories.map((c) => c.id),
-        page: currentPage,
-        limit: 10,
-      };
-
-      const monthly = await fetchMonthlyBalancesInRange(
-        date.from,
-        date.to,
-        selectedCategories.map((c) => c.id)
-      );
-      setMonthlyData(monthly);
-
-      try {
-        const [balanceRes, transactionsRes] = await Promise.all([
-          getBalanceByDateRange(params),
-          getRangedTransactions(params),
-        ]);
-        setBalanceData(balanceRes.data);
-        setTransactions(transactionsRes.data);
-      } catch (error) {
-        toast.error("Erro ao buscar dados do dashboard.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
+  useEffect(() => {
     fetchData();
   }, [date, selectedCategories, currentPage, categoriesLoaded]);
 
@@ -268,6 +273,8 @@ export default function DashboardPage() {
               transactions={transactions.data}
               meta={transactions.meta}
               onPageChange={handlePageChange}
+              onEdit={(transaction) => openTransactionFormWithData(transaction)}
+              onDeleted={fetchData}
             />
           )}
 

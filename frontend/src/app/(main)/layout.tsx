@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { CategoryForm } from "@/components/forms/category-form";
 import { TransactionForm } from "@/components/forms/transaction-form";
+import { CategoryManagerModal } from "@/components/dashboard/CategoryManagerModal";
 
 const breadcrumbNameMap: { [key: string]: string } = {
   "/": "Dashboard",
@@ -43,6 +44,8 @@ function AppLayoutContent({ children }: { children: ReactNode }) {
     closeTransactionForm,
     isCategoryFormOpen,
     closeCategoryForm,
+    isCategoryManagerOpen,
+    closeCategoryManager,
   } = useDashboardUI();
 
   return (
@@ -91,6 +94,10 @@ function AppLayoutContent({ children }: { children: ReactNode }) {
           <CategoryForm />
         </DialogContent>
       </Dialog>
+      <CategoryManagerModal
+        open={isCategoryManagerOpen}
+        onClose={closeCategoryManager}
+      />
     </SidebarProvider>
   );
 }

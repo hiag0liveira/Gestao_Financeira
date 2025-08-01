@@ -36,7 +36,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useDashboardUI } from "@/contexts/dashboard-ui-provider";
 import { getCategories } from "@/lib/api/categories";
-import { createTransaction } from "@/lib/api/transactions";
+import { createTransaction, updateTransaction } from "@/lib/api/transactions";
 import { cn } from "@/lib/utils";
 
 enum TransactionType {
@@ -77,22 +77,36 @@ interface Category {
   name: string;
 }
 
-export function TransactionForm() {
+interface TransactionFormProps {
+  onSaved?: () => void;
+}
+
+export function TransactionForm({ onSaved }: TransactionFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const { closeTransactionForm, openCategoryForm, setCategoryCreatedCallback } =
-    useDashboardUI();
+  const {
+    closeTransactionForm,
+    openCategoryForm,
+    editingTransaction,
+    clearEditingTransaction,
+  } = useDashboardUI();
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
-      description: "",
-      amount: "",
-      date: new Date(),
-      type: TransactionType.EXPENSE,
-      categoryId: undefined,
+      description: editingTransaction?.description || "",
+      amount: editingTransaction
+        ? String(editingTransaction.amount).replace(".", ",")
+        : "",
+      date: editingTransaction ? new Date(editingTransaction.date) : new Date(),
+      type:
+        (editingTransaction?.type as TransactionType) ||
+        TransactionType.EXPENSE,
+      categoryId: editingTransaction?.category?.id || undefined,
     },
   });
+
+  const { afterSave } = useDashboardUI();
 
   const transactionType = form.watch("type");
 
@@ -139,7 +153,7 @@ export function TransactionForm() {
       const numericAmount = parseFloat(
         values.amount.replace(/\./g, "").replace(",", ".")
       );
-      const formattedValues = {
+      const payload = {
         description: values.description,
         amount: numericAmount,
         date: format(values.date, "yyyy-MM-dd"),
@@ -149,13 +163,23 @@ export function TransactionForm() {
           recurrenceDay: values.date.getDate(),
         }),
       };
-      await createTransaction(formattedValues as any);
-      toast.success("Transação registada com sucesso!");
+
+      if (editingTransaction) {
+        await updateTransaction(editingTransaction.id, payload);
+        toast.success("Transação atualizada com sucesso!");
+      } else {
+        await createTransaction(payload as any);
+        toast.success("Transação registrada com sucesso!");
+      }
+
+      if (afterSave) {
+        afterSave();
+      }
+
+      clearEditingTransaction();
       closeTransactionForm();
     } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Erro ao registar transação."
-      );
+      toast.error(error.response?.data?.message || "Erro ao salvar transação.");
     } finally {
       setIsLoading(false);
     }

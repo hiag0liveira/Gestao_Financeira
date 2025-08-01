@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, FindManyOptions, In, Repository } from 'typeorm';
-import { Transaction } from './entities/transaction.entity';
+import { Transaction, TransactionType } from './entities/transaction.entity';
 import { Category } from '../categories/entities/category.entity';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
@@ -73,29 +73,138 @@ export class TransactionsService {
         const lastDay = new Date(year, month, 0);
 
         const where: FindManyOptions<Transaction>['where'] = {
-            date: Between(firstDay, lastDay)
+            user: { id: userId },
+            date: Between(firstDay, lastDay),
         };
 
         if (categoryIds && categoryIds.length > 0) {
             where.category = { id: In(categoryIds) };
         }
 
-        return this.findAndPaginate(userId, { where }, page, limit);
+        const normalTransactions = await this.transactionsRepository.find({
+            where,
+            relations: ['category'],
+        });
+
+        const fixedExpenses = await this.transactionsRepository.find({
+            where: { user: { id: userId }, type: TransactionType.FIXED_EXPENSE },
+            relations: ['category'],
+        });
+
+        const generatedFixed: Transaction[] = [];
+
+        for (const fixed of fixedExpenses) {
+            if ((fixed as any).recurrenceEndDate && new Date((fixed as any).recurrenceEndDate) < firstDay) {
+                continue;
+            }
+
+            const cursor = new Date(firstDay);
+            while (cursor <= lastDay) {
+                if (cursor.getDate() === fixed.recurrenceDay) {
+                    generatedFixed.push(
+                        this.transactionsRepository.create({
+                            amount: fixed.amount,
+                            description: fixed.description,
+                            date: new Date(cursor),
+                            type: fixed.type,
+                            recurrenceDay: fixed.recurrenceDay,
+                            category: fixed.category,
+                            user: fixed.user,
+                        }),
+                    );
+                }
+                cursor.setDate(cursor.getDate() + 1);
+            }
+        }
+
+        const allTransactions = [...normalTransactions, ...generatedFixed].sort(
+            (a, b) => b.date.getTime() - a.date.getTime()
+        );
+
+        const total = allTransactions.length;
+        const paginated = allTransactions.slice((page - 1) * limit, page * limit);
+
+        return {
+            data: paginated,
+            meta: {
+                totalItems: total,
+                itemsPerPage: limit,
+                currentPage: page,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
     }
+
 
     async findAllByRange(userId: number, query: GetRangedTransactionsDto) {
         const { startDate, endDate, page = 1, limit = 10, categoryIds } = query;
 
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
         const where: FindManyOptions<Transaction>['where'] = {
-            date: Between(new Date(startDate), new Date(endDate))
+            user: { id: userId },
+            date: Between(start, end),
         };
 
         if (categoryIds && categoryIds.length > 0) {
             where.category = { id: In(categoryIds) };
         }
 
-        return this.findAndPaginate(userId, { where }, page, limit);
+        const normalTransactions = await this.transactionsRepository.find({
+            where,
+            relations: ['category'],
+        });
+
+        const fixedExpenses = await this.transactionsRepository.find({
+            where: { user: { id: userId }, type: TransactionType.FIXED_EXPENSE },
+            relations: ['category'],
+        });
+
+        const generatedFixed: Transaction[] = [];
+
+        for (const fixed of fixedExpenses) {
+            if ((fixed as any).recurrenceEndDate && new Date((fixed as any).recurrenceEndDate) < start) {
+                continue;
+            }
+
+            const cursor = new Date(start);
+            while (cursor <= end) {
+                if (cursor.getDate() === fixed.recurrenceDay) {
+                    generatedFixed.push(
+                        this.transactionsRepository.create({
+                            amount: fixed.amount,
+                            description: fixed.description,
+                            date: new Date(cursor),
+                            type: fixed.type,
+                            recurrenceDay: fixed.recurrenceDay,
+                            category: fixed.category,
+                            user: fixed.user,
+                        }),
+                    );
+                }
+                cursor.setDate(cursor.getDate() + 1);
+            }
+        }
+
+        const allTransactions = [...normalTransactions, ...generatedFixed].sort(
+            (a, b) => b.date.getTime() - a.date.getTime()
+        );
+
+        const total = allTransactions.length;
+        const paginated = allTransactions.slice((page - 1) * limit, page * limit);
+
+        return {
+            data: paginated,
+            meta: {
+                totalItems: total,
+                itemsPerPage: limit,
+                currentPage: page,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
     }
+
 
     async update(id: number, updateTransactionDto: UpdateTransactionDto, userId: number): Promise<Transaction> {
         const transaction = await this.transactionsRepository.findOne({

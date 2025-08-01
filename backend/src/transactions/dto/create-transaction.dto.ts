@@ -45,6 +45,15 @@ export class CreateTransactionDto {
     recurrenceDay?: number;
 
     @ApiPropertyOptional({
+        description: 'Data final da recorrência da despesa fixa. Se não informado, será infinita.',
+        example: '2025-12-31',
+    })
+    @IsOptional()
+    @IsDateString({}, { message: 'A data final deve estar no formato YYYY-MM-DD.' })
+    recurrenceEndDate?: Date;
+
+
+    @ApiPropertyOptional({
         description: 'O ID da categoria à qual a transação pertence.',
         example: 1,
     })

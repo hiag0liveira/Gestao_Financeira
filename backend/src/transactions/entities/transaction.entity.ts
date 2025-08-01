@@ -31,6 +31,10 @@ export class Transaction {
     @Column({ nullable: true })
     recurrenceDay: number;
 
+    @Column({ type: 'date', nullable: true })
+    recurrenceEndDate?: Date;
+
+
     @ManyToOne(() => User, (user) => user.transactions, { nullable: false })
     user: User;
 

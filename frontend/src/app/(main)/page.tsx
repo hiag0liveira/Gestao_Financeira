@@ -122,7 +122,9 @@ export default function DashboardPage() {
     const params = {
       startDate: format(date.from, "yyyy-MM-dd"),
       endDate: format(date.to, "yyyy-MM-dd"),
-      categoryIds: selectedCategories.map((c) => c.id),
+      categoryIds: selectedCategories.some((c) => c.id === -1)
+        ? []
+        : selectedCategories.map((c) => c.id),
       page: currentPage,
       limit: 10,
     };
@@ -153,7 +155,10 @@ export default function DashboardPage() {
       try {
         const response = await getCategories();
         setAllCategories(response.data);
-        setSelectedCategories(response.data);
+        setSelectedCategories([
+          { id: -1, name: "Sem categoria" },
+          ...response.data,
+        ]);
         setCategoriesLoaded(true);
       } catch (error) {
         toast.error("Erro ao carregar categorias.");

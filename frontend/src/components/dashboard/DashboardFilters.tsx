@@ -30,7 +30,6 @@ import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
-// Tipagens dos dados
 interface Category {
   id: number;
   name: string;
@@ -85,9 +84,13 @@ export function DashboardFilters({
     });
   };
 
+  const categoriesWithNA = [
+    { id: -1, name: "Sem categoria" },
+    ...allCategories,
+  ];
+
   return (
     <div className="flex flex-col sm:flex-row items-center gap-2">
-      {/* Filtros rápidos e personalizados */}
       <div className="flex flex-col gap-2 w-full">
         <div className="flex flex-wrap items-center gap-2">
           <Button
@@ -151,7 +154,6 @@ export function DashboardFilters({
         </div>
       </div>
 
-      {/* Seletor de categorias */}
       <div className="flex w-full sm:w-auto items-center gap-2">
         <Popover
           open={openCategorySelector}
@@ -195,8 +197,9 @@ export function DashboardFilters({
                   </CommandItem>
                 </CommandGroup>
                 <CommandSeparator />
+
                 <CommandGroup>
-                  {allCategories.map((category) => (
+                  {categoriesWithNA.map((category) => (
                     <CommandItem
                       key={category.id}
                       value={category.name}
@@ -225,7 +228,6 @@ export function DashboardFilters({
           </PopoverContent>
         </Popover>
 
-        {/* Botão de nova transação */}
         <Button
           onClick={openTransactionForm}
           className="sm:ml-auto w-full sm:w-auto"

@@ -28,8 +28,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { CategoryForm } from "@/components/category-form";
-import { TransactionForm } from "@/components/transaction-form";
+import { CategoryForm } from "@/components/forms/category-form";
+import { TransactionForm } from "@/components/forms/transaction-form";
 
 const breadcrumbNameMap: { [key: string]: string } = {
   "/": "Dashboard",

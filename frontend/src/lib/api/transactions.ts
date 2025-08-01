@@ -9,15 +9,15 @@ enum TransactionType {
 interface CreateTransactionData {
     description: string;
     amount: number;
-    date: string;
+    date: string; // Formato YYYY-MM-DD
     type: TransactionType;
     categoryId: number;
     recurrenceDay?: number;
 }
 
-interface MonthlyTransactionParams {
-    year: number;
-    month: number;
+interface RangedTransactionParams {
+    startDate: string;
+    endDate: string;
     page?: number;
     limit?: number;
     categoryIds?: number[];
@@ -29,8 +29,8 @@ export const createTransaction = (data: CreateTransactionData) => {
 };
 
 
-export const getMonthlyTransactions = (params: MonthlyTransactionParams) => {
-    return apiClient.get('/transactions', { params });
+export const getRangedTransactions = (params: RangedTransactionParams) => {
+    return apiClient.get('/transactions/by-range', { params });
 };
 
 

@@ -14,7 +14,6 @@ const navLinks = [
   { href: "/", title: "Visão Geral", icon: Home, isLink: true },
   { action: "addTransaction", title: "Nova Transação", icon: PlusCircle },
   { action: "addCategory", title: "Nova Categoria", icon: PackagePlus },
-  { href: "#reports", title: "Relatórios", icon: LineChart, isLink: true },
 ];
 
 export function NavMain() {

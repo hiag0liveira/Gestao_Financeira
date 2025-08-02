@@ -62,10 +62,11 @@ O `docker compose up` na raiz do projeto já inicia este serviço.
 
 2.  **Instale as dependências:**
     `bash
-    npm install
-    `
-    > [!NOTE]
-    > Certifique-se de que o backend já está a rodar, pois o frontend precisa de se conectar à API. A URL da API é configurada pela variável de ambiente `NEXT_PUBLIC_API_URL` no ficheiro `.env` na raiz do projeto.
+npm install
+`
+
+> [!NOTE]
+> Certifique-se de que o backend já está a rodar, pois o frontend precisa de se conectar à API. A URL da API é configurada pela variável de ambiente `NEXT_PUBLIC_API_URL` no ficheiro `.env` na raiz do projeto.
 
 #### Execução
 

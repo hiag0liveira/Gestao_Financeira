@@ -57,9 +57,62 @@ Este projeto é totalmente containerizado, então tudo que você precisa é ter 
 4.  **Pronto!** A aplicação estará disponível nos seguintes endereços:
     - **Frontend (Next.js):** http://localhost:3001
     - **Backend (NestJS):** http://localhost:3000
+    - **Documentação da API (Swagger):** http://localhost:3000/api
 
 > [!WARNING]
 > O argumento `--build` é necessário apenas na primeira vez ou quando você instalar novas dependências. Para as próximas vezes, você pode usar apenas `docker compose up`.
+
+---
+
+## 💡 Explicação das Decisões Técnicas
+
+Este projeto foi desenvolvido com foco em boas práticas de arquitetura, escalabilidade e na experiência do programador (DevEx).
+
+### Estrutura Geral
+
+- **Monorepo e Docker:** A escolha de uma estrutura de monorepo com `frontend` e `backend` separados, orquestrados por `Docker Compose`, foi feita para garantir um ambiente de desenvolvimento consistente, replicável e isolado, eliminando problemas de configuração entre diferentes máquinas.
+
+### Backend (NestJS)
+
+- **Arquitetura Modular:** A API foi dividida em módulos (`Auth`, `Users`, `Transactions`, `Categories`, `Balance`) para garantir a separação de responsabilidades e facilitar a manutenção.
+- **Funcionalidades Avançadas:** Para ir além dos requisitos básicos, foram implementadas funcionalidades como um **CRUD completo de Categorias**, permitindo uma melhor organização para o utilizador. Além disso, as rotas de listagem foram aprimoradas com **filtros por intervalo de datas (`date range`)** e **paginação**, garantindo que a API seja performática e flexível.
+- **Segurança com JWT em Cookies:** A autenticação é baseada em JSON Web Tokens. Para uma maior segurança contra ataques XSS, o token é gerido através de **cookies**, em vez de `localStorage`. As rotas são protegidas por `Guards`, garantindo que um utilizador só possa aceder aos seus próprios dados.
+- **TypeORM e `synchronize`:** Para acelerar o desenvolvimento, a opção `synchronize: true` foi utilizada, permitindo que as entidades do código modelem o banco de dados automaticamente. Num ambiente de produção, esta opção seria desativada em favor de um sistema de `Migrations`.
+- **Documentação com Swagger:** A API é autodocumentada utilizando OpenAPI (Swagger), o que facilita os testes e a integração.
+
+### Frontend (Next.js)
+
+- **Next.js App Router:** A escolha pelo App Router do Next.js permite uma estrutura de rotas moderna e o uso de layouts aninhados, como a separação entre as áreas de autenticação `(auth)` e a aplicação principal `(main)`.
+- **UI e Gráficos:** Para a interface, foi utilizado o **shadcn/ui** sobre o Tailwind CSS. Os gráficos foram construídos com **Recharts**, a biblioteca base dos componentes de gráficos do shadcn, garantindo uma integração visual perfeita e a criação de dashboards interativos.
+- **Gerenciamento de Estado:** Para o estado global (dados do utilizador, controlo da UI), foi utilizada a **Context API** nativa do React, que é ideal para a escala deste projeto e evita a complexidade de bibliotecas externas.
+- **Comunicação com API:** A comunicação com o backend é gerida pelo **Axios**, configurado com um `interceptor` para centralizar a lógica e adicionar automaticamente o token de autenticação JWT a todas as requisições protegidas.
+- **Formulários Robustos:** A combinação de **React Hook Form** e **Zod** garante formulários performáticos e com uma validação de dados segura e totalmente tipada.
+
+---
+
+## 🖼️ Capturas de Tela do Sistema
+
+### Páginas de Autenticação (Modo Claro e Escuro)
+
+|                   Login (Claro)                    |                     Login (Escuro)                      |
+| :------------------------------------------------: | :-----------------------------------------------------: |
+| ![Página de Login no modo claro](./docs/login.png) | ![Página de Login no modo escuro](./docs/loginDark.png) |
+
+|                  Cadastro                  |                                 Validação de Erros                                  |
+| :----------------------------------------: | :---------------------------------------------------------------------------------: |
+| ![Página de Cadastro](./docs/register.png) | ![Exemplo de validação de erros no formulário de cadastro](./docs/registerFail.png) |
+
+### Dashboard Principal (Modo Claro e Escuro)
+
+|                     Dashboard (Claro)                     |                       Dashboard (Escuro)                        |
+| :-------------------------------------------------------: | :-------------------------------------------------------------: |
+| ![Dashboard principal no modo claro](./docs/dashboad.png) | ![Dashboard principal no modo escuro](./docs/dashboardDark.png) |
+
+### Funcionalidades do Dashboard
+
+|                        Tabela de Transações                         |                        Modal de Nova Transação                         |                       Modal de Nova Categoria                        |
+| :-----------------------------------------------------------------: | :--------------------------------------------------------------------: | :------------------------------------------------------------------: |
+| ![Tabela de transações com paginação](./docs/tableTransactions.png) | ![Modal para criação de uma nova transação](./docs/newTransaction.png) | ![Modal para criação de uma nova categoria](./docs/newCategorie.png) |
 
 ---
 
@@ -156,6 +209,3 @@ sequenceDiagram
 ```
 
 ---
-
-> [!IMPORTANT]
-> A organização e o desenvolvimento das funcionalidades devem seguir as tarefas definidas no quadro Kanban do projeto no GitHub. Isso garante que todos os requisitos do desafio sejam atendidos de forma organizada ⚡️

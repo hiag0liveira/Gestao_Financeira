@@ -47,12 +47,12 @@ Este projeto é totalmente containerizado, então tudo que você precisa é ter 
     docker compose up --build
     ```
 
-    > [!NOTE]
-    > Dependendo da sua versão do Docker, o comando pode ser `docker-compose` (com hífen). Se `docker compose` não funcionar, tente a versão com hífen:
-    >
-    > ```bash
-    > docker-compose up --build
-    > ```
+> [!NOTE]
+> Dependendo da sua versão do Docker, o comando pode ser `docker-compose` (com hífen). Se `docker compose` não funcionar, tente a versão com hífen:
+>
+> ```bash
+> docker-compose up --build
+> ```
 
 4.  **Pronto!** A aplicação estará disponível nos seguintes endereços:
     - **Frontend (Next.js):** http://localhost:3001

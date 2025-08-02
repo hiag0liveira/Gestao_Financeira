@@ -82,7 +82,10 @@ export class TransactionsService {
         }
 
         const normalTransactions = await this.transactionsRepository.find({
-            where,
+            where: {
+                ...where,
+                type: In([TransactionType.INCOME, TransactionType.EXPENSE])
+            },
             relations: ['category'],
         });
 
@@ -91,23 +94,32 @@ export class TransactionsService {
             relations: ['category'],
         });
 
-        const generatedFixed: Transaction[] = [];
 
+        const generatedFixed: Transaction[] = [];
         for (const fixed of fixedExpenses) {
-            if ((fixed as any).recurrenceEndDate && new Date((fixed as any).recurrenceEndDate) < firstDay) {
+            const recurrenceEnd = fixed.recurrenceEndDate ? new Date(fixed.recurrenceEndDate) : null;
+
+            if (recurrenceEnd && recurrenceEnd.getTime() < firstDay.getTime()) {
                 continue;
             }
 
             const cursor = new Date(firstDay);
-            while (cursor <= lastDay) {
+
+            while (cursor.getTime() <= lastDay.getTime()) {
+                if (recurrenceEnd && cursor.getTime() > recurrenceEnd.getTime()) {
+                    break;
+                }
+
                 if (cursor.getDate() === fixed.recurrenceDay) {
                     generatedFixed.push(
                         this.transactionsRepository.create({
+                            id: fixed.id,
                             amount: fixed.amount,
                             description: fixed.description,
                             date: new Date(cursor),
                             type: fixed.type,
                             recurrenceDay: fixed.recurrenceDay,
+                            recurrenceEndDate: fixed.recurrenceEndDate,
                             category: fixed.category,
                             user: fixed.user,
                         }),
@@ -117,9 +129,11 @@ export class TransactionsService {
             }
         }
 
-        const allTransactions = [...normalTransactions, ...generatedFixed].sort(
-            (a, b) => b.date.getTime() - a.date.getTime()
-        );
+        const allTransactions = [...normalTransactions, ...generatedFixed].sort((a, b) => {
+            const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+            const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+            return dateB.getTime() - dateA.getTime();
+        });
 
         const total = allTransactions.length;
         const paginated = allTransactions.slice((page - 1) * limit, page * limit);
@@ -150,9 +164,11 @@ export class TransactionsService {
         if (categoryIds && categoryIds.length > 0) {
             where.category = { id: In(categoryIds) };
         }
-
         const normalTransactions = await this.transactionsRepository.find({
-            where,
+            where: {
+                ...where,
+                type: In([TransactionType.INCOME, TransactionType.EXPENSE])
+            },
             relations: ['category'],
         });
 
@@ -161,6 +177,7 @@ export class TransactionsService {
             relations: ['category'],
         });
 
+
         const generatedFixed: Transaction[] = [];
 
         for (const fixed of fixedExpenses) {
@@ -168,28 +185,40 @@ export class TransactionsService {
                 continue;
             }
 
+            const recurrenceEnd = fixed.recurrenceEndDate ? new Date(fixed.recurrenceEndDate) : null;
             const cursor = new Date(start);
-            while (cursor <= end) {
+
+            while (cursor.getTime() <= end.getTime()) {
+
+                if (recurrenceEnd && cursor.getTime() > recurrenceEnd.getTime()) {
+                    break;
+                }
+
                 if (cursor.getDate() === fixed.recurrenceDay) {
                     generatedFixed.push(
                         this.transactionsRepository.create({
+                            id: fixed.id,
                             amount: fixed.amount,
                             description: fixed.description,
                             date: new Date(cursor),
                             type: fixed.type,
                             recurrenceDay: fixed.recurrenceDay,
+                            recurrenceEndDate: fixed.recurrenceEndDate,
                             category: fixed.category,
                             user: fixed.user,
                         }),
                     );
                 }
+
                 cursor.setDate(cursor.getDate() + 1);
             }
         }
 
-        const allTransactions = [...normalTransactions, ...generatedFixed].sort(
-            (a, b) => b.date.getTime() - a.date.getTime()
-        );
+        const allTransactions = [...normalTransactions, ...generatedFixed].sort((a, b) => {
+            const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+            const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+            return dateB.getTime() - dateA.getTime();
+        });
 
         const total = allTransactions.length;
         const paginated = allTransactions.slice((page - 1) * limit, page * limit);

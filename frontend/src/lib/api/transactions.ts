@@ -13,6 +13,7 @@ interface CreateTransactionData {
     type: TransactionType;
     categoryId: number;
     recurrenceDay?: number;
+    recurrenceEndDate?: string;
 }
 
 interface RangedTransactionParams {

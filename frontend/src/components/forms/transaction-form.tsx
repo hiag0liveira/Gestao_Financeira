@@ -68,6 +68,7 @@ const transactionFormSchema = z.object({
     any,
     any
   >,
+  recurrenceEndDate: z.date().optional(),
 });
 
 type TransactionFormValues = z.infer<typeof transactionFormSchema>;
@@ -103,6 +104,9 @@ export function TransactionForm({ onSaved }: TransactionFormProps) {
         (editingTransaction?.type as TransactionType) ||
         TransactionType.EXPENSE,
       categoryId: editingTransaction?.category?.id || undefined,
+      recurrenceEndDate: editingTransaction?.recurrenceEndDate
+        ? new Date(editingTransaction.recurrenceEndDate)
+        : undefined,
     },
   });
 
@@ -161,6 +165,9 @@ export function TransactionForm({ onSaved }: TransactionFormProps) {
         categoryId: values.categoryId,
         ...(values.type === TransactionType.FIXED_EXPENSE && {
           recurrenceDay: values.date.getDate(),
+          recurrenceEndDate: values.recurrenceEndDate
+            ? format(values.recurrenceEndDate, "yyyy-MM-dd")
+            : undefined,
         }),
       };
 
@@ -352,6 +359,47 @@ export function TransactionForm({ onSaved }: TransactionFormProps) {
             </FormItem>
           )}
         />
+        {transactionType === TransactionType.FIXED_EXPENSE && (
+          <FormField
+            control={form.control}
+            name="recurrenceEndDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Data Final da Recorrência (opcional)</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                        disabled={isLoading}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {field.value ? (
+                          format(field.value, "PPP", { locale: ptBR })
+                        ) : (
+                          <span>Escolha uma data</span>
+                        )}
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <Button type="submit" className="w-full !mt-6" disabled={isLoading}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

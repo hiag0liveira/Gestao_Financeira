@@ -49,7 +49,11 @@ export class BalanceService {
         });
 
         fixedExpenses.forEach(t => {
-            if (t.recurrenceEndDate && t.recurrenceEndDate.getTime() < startDate.getTime()) {
+            const endDateObj = t.recurrenceEndDate
+                ? new Date(t.recurrenceEndDate)
+                : null;
+
+            if (endDateObj && endDateObj.getTime() < startDate.getTime()) {
                 return;
             }
 
@@ -61,6 +65,8 @@ export class BalanceService {
                 cursor.setDate(cursor.getDate() + 1);
             }
         });
+
+
 
         const balance = totalIncome - totalExpense;
 
@@ -112,7 +118,11 @@ export class BalanceService {
         });
 
         fixedExpenses.forEach(t => {
-            if (t.recurrenceEndDate && t.recurrenceEndDate.getTime() < start.getTime()) {
+            const endDateObj = t.recurrenceEndDate
+                ? new Date(t.recurrenceEndDate)
+                : null;
+
+            if (endDateObj && endDateObj.getTime() < start.getTime()) {
                 return;
             }
 
@@ -124,6 +134,7 @@ export class BalanceService {
                 cursor.setDate(cursor.getDate() + 1);
             }
         });
+
 
         const balance = totalIncome - totalExpense;
 

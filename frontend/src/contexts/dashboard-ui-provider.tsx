@@ -20,6 +20,7 @@ interface Transaction {
   date: string;
   type: "income" | "expense" | "fixed-expense";
   category: Category;
+  recurrenceEndDate?: string;
 }
 
 interface DashboardUIContextType {

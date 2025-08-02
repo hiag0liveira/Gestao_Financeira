@@ -25,8 +25,9 @@ A segurança da API é garantida através de JSON Web Tokens (JWT).
 1.  **Login**: Ao se autenticar com sucesso, o usuário recebe um `access_token`.
 2.  **Requisições Seguras**: Para acessar rotas protegidas, o cliente deve enviar este token no cabeçalho `Authorization` com o prefixo `Bearer`.
 3.  **`JwtAuthGuard`**: Um `Guard` estratégico verifica a validade do token em cada requisição, garantindo que apenas usuários autenticados possam acessar os recursos.
-    > [!TIP]
-    > Todos os serviços foram cuidadosamente projetados para aplicar o **escopo de dados**, garantindo que um usuário (`userId` extraído do token) só possa acessar e manipular os seus próprios dados (categorias, transações, etc.).
+
+> [!TIP]
+> Todos os serviços foram cuidadosamente projetados para aplicar o **escopo de dados**, garantindo que um usuário (`userId` extraído do token) só possa acessar e manipular os seus próprios dados (categorias, transações, etc.).
 
 ---
 
@@ -100,8 +101,8 @@ Caso prefira rodar a aplicação diretamente na sua máquina, siga os passos aba
     cp .env.example .env
     ```
 
-    > [!TIP]
-    > Um exemplo de `DATABASE_URL` para um banco local seria: `postgresql://user:password@localhost:5432/gestao_financeira?schema=public`
+> [!TIP]
+> Um exemplo de `DATABASE_URL` para um banco local seria: `postgresql://user:password@localhost:5432/gestao_financeira?schema=public`
 
 3.  **Instale as dependências:**
     ```bash

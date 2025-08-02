@@ -39,32 +39,36 @@ export class BalanceService {
 
         let totalIncome = 0;
         let totalExpense = 0;
-
         transactions.forEach(t => {
             if (t.type === TransactionType.INCOME) {
                 totalIncome += Number(t.amount);
-            } else if (t.type === TransactionType.EXPENSE) {
+            } else if (t.type === TransactionType.EXPENSE || t.type === TransactionType.FIXED_EXPENSE) {
                 totalExpense += Number(t.amount);
             }
         });
 
         fixedExpenses.forEach(t => {
-            const endDateObj = t.recurrenceEndDate
-                ? new Date(t.recurrenceEndDate)
-                : null;
+            const endDateObj = t.recurrenceEndDate ? new Date(t.recurrenceEndDate) : null;
 
-            if (endDateObj && endDateObj.getTime() < startDate.getTime()) {
-                return;
-            }
+            if (endDateObj && endDateObj < startDate) return;
 
             const cursor = new Date(startDate);
-            while (cursor.getTime() <= endDate.getTime()) {
+            while (cursor <= endDate) {
                 if (cursor.getDate() === t.recurrenceDay) {
-                    totalExpense += Number(t.amount);
+                    const exists = transactions.some(tr =>
+                        tr.type === TransactionType.FIXED_EXPENSE &&
+                        tr.recurrenceDay === t.recurrenceDay &&
+                        new Date(tr.date).getTime() === cursor.getTime()
+                    );
+                    if (!exists) {
+                        totalExpense += Number(t.amount);
+                    }
                 }
                 cursor.setDate(cursor.getDate() + 1);
             }
         });
+
+
 
 
 
@@ -77,7 +81,6 @@ export class BalanceService {
             balance,
         };
     }
-
 
     async calculateBalanceByDateRange(
         userId: number,
@@ -104,6 +107,7 @@ export class BalanceService {
 
         const fixedExpenses = await this.transactionsRepository.find({
             where: { user: { id: userId }, type: TransactionType.FIXED_EXPENSE },
+            relations: ['category'],
         });
 
         let totalIncome = 0;
@@ -112,29 +116,33 @@ export class BalanceService {
         transactions.forEach(t => {
             if (t.type === TransactionType.INCOME) {
                 totalIncome += Number(t.amount);
-            } else if (t.type === TransactionType.EXPENSE) {
+            } else if (t.type === TransactionType.EXPENSE || t.type === TransactionType.FIXED_EXPENSE) {
                 totalExpense += Number(t.amount);
             }
         });
 
         fixedExpenses.forEach(t => {
-            const endDateObj = t.recurrenceEndDate
-                ? new Date(t.recurrenceEndDate)
-                : null;
+            const endDateObj = t.recurrenceEndDate ? new Date(t.recurrenceEndDate) : null;
 
-            if (endDateObj && endDateObj.getTime() < start.getTime()) {
-                return;
-            }
+            if (endDateObj && endDateObj < start) return;
 
             const cursor = new Date(start);
-            while (cursor.getTime() <= end.getTime()) {
+            while (cursor <= end) {
                 if (cursor.getDate() === t.recurrenceDay) {
-                    totalExpense += Number(t.amount);
+                    const exists = transactions.some(tr =>
+                        tr.type === TransactionType.FIXED_EXPENSE &&
+                        tr.recurrenceDay === t.recurrenceDay &&
+                        new Date(tr.date).getTime() === cursor.getTime()
+                    );
+                    if (!exists) {
+                        if (!endDateObj || cursor <= endDateObj) {
+                            totalExpense += Number(t.amount);
+                        }
+                    }
                 }
                 cursor.setDate(cursor.getDate() + 1);
             }
         });
-
 
         const balance = totalIncome - totalExpense;
 
@@ -147,5 +155,7 @@ export class BalanceService {
             balance,
         };
     }
+
+
 
 }
